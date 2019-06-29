@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using SlackAPI;
 using System;
 using System.Data;
 using System.Data.SqlClient;
@@ -48,6 +49,8 @@ namespace DependencyInjectionWorkshop.Models
             }
             else
             {
+                var slackClient = new SlackClient("my api token");
+                slackClient.PostMessage(responseMessage => { }, "my channel", "my message", "my bot name");
                 return false;
             }
         }
