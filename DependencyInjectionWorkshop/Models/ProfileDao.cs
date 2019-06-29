@@ -10,7 +10,7 @@ namespace DependencyInjectionWorkshop.Models
         string GetPassword(string accountId);
     }
 
-    public class ProfileDao : IProfile
+    public class Profile : IProfile
     {
         public string GetPassword(string accountId)
         {
