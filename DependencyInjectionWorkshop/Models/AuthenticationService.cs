@@ -38,13 +38,6 @@ namespace DependencyInjectionWorkshop.Models
 
         public bool Verify(string accountId, string password, string otp)
         {
-            //檢查帳號是否被封鎖
-            var isLocked = _failedCounter.IsAccountLocked(accountId);
-            if (isLocked)
-            {
-                throw new FailedTooManyTimesException();
-            }
-
             //取得密碼
             var currentPassword = _profile.GetPassword(accountId);
 
