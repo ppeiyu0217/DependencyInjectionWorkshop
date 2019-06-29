@@ -1,4 +1,6 @@
-﻿using DependencyInjectionWorkshop.Models;
+﻿using System;
+using System.ComponentModel.Design;
+using DependencyInjectionWorkshop.Models;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -9,31 +11,32 @@ namespace DependencyInjectionWorkshopTests
     {
         private IProfile _profile;
         private IFailedCounter _failedCounter;
-        private IHash _sha256Adapter;
+        private IHash _hash;
         private ILogger _logger;
-        private INotification _slackAdapter;
+        private INotification _notification;
         private IOtpService _otpService;
         private AuthenticationService _authenticationService;
         private string DefaultAccount = "joey";
         private string DefaultInputPassword = "9487";
         private string DefaultOtp = "9527";
         private string DefaultHashPassword = "abc";
+        private int DefaultFailedCount = 91;
 
         [SetUp]
         public void SetUp()
         {
             _profile = Substitute.For<IProfile>();
             _failedCounter = Substitute.For<IFailedCounter>();
-            _sha256Adapter = Substitute.For<IHash>();
+            _hash = Substitute.For<IHash>();
             _logger = Substitute.For<ILogger>();
-            _slackAdapter = Substitute.For<INotification>();
+            _notification = Substitute.For<INotification>();
             _otpService = Substitute.For<IOtpService>();
 
             _authenticationService = new AuthenticationService(
                 _logger,
                 _profile,
-                _slackAdapter,
-                _sha256Adapter,
+                _notification,
+                _hash,
                 _failedCounter,
                 _otpService);
         }
@@ -59,10 +62,107 @@ namespace DependencyInjectionWorkshopTests
 
             var isValid = WhenVerify(DefaultAccount, DefaultInputPassword, "wrong otp");
 
-            ShouldBeInValid(isValid);
+            ShouldBeInvalid(isValid);
         }
 
-        private static void ShouldBeInValid(bool isValid)
+        [Test]
+        public void should_notify_when_invalid()
+        {
+            WhenInvalid();
+            ShouldNotify(DefaultAccount);
+        }
+
+        [Test]
+        public void should_add_failedCount_when_invalid()
+        {
+            WhenInvalid();
+            ShouldAddFailedCount(DefaultAccount);
+        }
+
+        [Test]
+        public void should_Reset_FailedCount_when_valid()
+        {
+            WhenVerified();
+            ShouldResetFailedCount(DefaultAccount);
+        }
+
+        [Test]
+        public void should_log_failed_count_when_invalid()
+        {
+            GivenFailedCount(DefaultFailedCount);
+            WhenInvalid();
+            ShouldLog(DefaultAccount, DefaultFailedCount.ToString());
+        }
+
+        [Test]
+        public void account_is_locked()
+        {
+            GivenAccountIsLocked();
+            ShouldThrow<FailedTooManyTimesException>();
+        }
+
+        private void ShouldThrow<TException>() where TException : Exception
+        {
+            TestDelegate action = WhenVerified;
+            Assert.Throws<TException>(action);
+        }
+
+        private void GivenAccountIsLocked()
+        {
+            _failedCounter.IsAccountLocked(DefaultAccount).ReturnsForAnyArgs(true);
+        }
+
+        private void ShouldLog(string account, string failedCount)
+        {
+            _logger.Received().Info(Arg.Is<string>(m => m.Contains(account) && m.Contains(failedCount)));
+        }
+
+        private void GivenFailedCount(int failedCount)
+        {
+            _failedCounter.GetFailedCount(DefaultAccount).ReturnsForAnyArgs(failedCount);
+        }
+
+        private void ShouldResetFailedCount(string account)
+        {
+            _failedCounter.Received().ResetFailedCount(account);
+        }
+
+        private void WhenVerified()
+        {
+            GivenPasswordFromDb(DefaultAccount, DefaultHashPassword);
+            GivenHashPassword(DefaultInputPassword, DefaultHashPassword);
+            GivenOtp(DefaultAccount, DefaultOtp);
+
+            var isValid = WhenVerify(DefaultAccount, DefaultInputPassword, DefaultOtp);
+
+            ShouldBeValid(isValid);
+        }
+
+
+        private void ShouldAddFailedCount(string account)
+        {
+            _failedCounter.Received().AddFailedCount(account);
+        }
+
+
+        private void ShouldNotify(string account)
+        {
+            _notification.Received().PushMessage(Arg.Is<string>(m => m.Contains(account)));
+        }
+
+
+        private void WhenInvalid()
+        {
+            GivenPasswordFromDb(DefaultAccount, DefaultHashPassword);
+            GivenHashPassword(DefaultInputPassword, DefaultHashPassword);
+            GivenOtp(DefaultAccount, DefaultOtp);
+
+            var isValid = WhenVerify(DefaultAccount, DefaultInputPassword, "wrong otp");
+
+            ShouldBeInvalid(isValid);
+        }
+
+        private static void ShouldBeInvalid(bool isValid)
         {
             Assert.IsFalse(isValid);
         }
@@ -85,7 +185,7 @@ namespace DependencyInjectionWorkshopTests
 
         private void GivenHashPassword(string password, string hashedPassword)
         {
-            _sha256Adapter.Compute(password).ReturnsForAnyArgs(hashedPassword);
+            _hash.Compute(password).ReturnsForAnyArgs(hashedPassword);
         }
 
         private void GivenPasswordFromDb(string accountId, string passwordFromDb)
