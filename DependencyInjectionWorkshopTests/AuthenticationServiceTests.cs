@@ -15,7 +15,7 @@ namespace DependencyInjectionWorkshopTests
         private ILogger _logger;
         private INotification _notification;
         private IOtpService _otpService;
-        private AuthenticationService _authenticationService;
+        private IAuthenticationService _authenticationService;
         private string DefaultAccount = "joey";
         private string DefaultInputPassword = "9487";
         private string DefaultOtp = "9527";
@@ -32,12 +32,14 @@ namespace DependencyInjectionWorkshopTests
             _notification = Substitute.For<INotification>();
             _otpService = Substitute.For<IOtpService>();
 
-            _authenticationService = new AuthenticationService(
+            var authenticationService = new AuthenticationService(
                 _logger,
                 _profile,
                 _hash,
                 _failedCounter,
                 _otpService);
+
+            _authenticationService = new NotificationDecorator(authenticationService, _notification);
         }
 
         [Test]
