@@ -15,7 +15,7 @@ namespace DependencyInjectionWorkshopTests
         private ILogger _logger;
         private INotification _notification;
         private IOtpService _otpService;
-        private IAuthenticationService _authenticationService;
+        private IAuthentication _authentication;
         private string DefaultAccount = "joey";
         private string DefaultInputPassword = "9487";
         private string DefaultOtp = "9527";
@@ -39,7 +39,7 @@ namespace DependencyInjectionWorkshopTests
                 _failedCounter,
                 _otpService);
 
-            _authenticationService = new NotificationDecorator(authenticationService, _notification);
+            _authentication = new NotificationDecorator(authenticationService, _notification);
         }
 
         [Test]
@@ -175,7 +175,7 @@ namespace DependencyInjectionWorkshopTests
 
         private bool WhenVerify(string accountId, string password, string otp)
         {
-            var isValid = _authenticationService.Verify(accountId, password, otp);
+            var isValid = _authentication.Verify(accountId, password, otp);
             return isValid;
         }
 
