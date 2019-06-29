@@ -9,8 +9,25 @@ using System.Text;
 
 namespace DependencyInjectionWorkshop.Models
 {
+    public class ProFileDao
+    {
+        public string GetCurrentPasswordFromDb(string accountId)
+        {
+            string currentPassword;
+            using (var connection = new SqlConnection("datasource=db,password=abc"))
+            {
+                currentPassword = connection.Query<string>("spGetUserPassword", new {Id = accountId},
+                    commandType: CommandType.StoredProcedure).SingleOrDefault();
+            }
+
+            return currentPassword;
+        }
+    }
+
     public class AuthenticationService
     {
+        private readonly ProFileDao _proFileDao = new ProFileDao();
+
         public bool Verify(string accountId, string password, string otp)
         {
             //檢查帳號是否被封鎖
@@ -22,7 +39,7 @@ namespace DependencyInjectionWorkshop.Models
             }
 
             //取得密碼
-            var currentPassword = GetCurrentPasswordFromDb(accountId);
+            var currentPassword = _proFileDao.GetCurrentPasswordFromDb(accountId);
 
             var hashPassword = GetHashPassword(password);
 
@@ -41,7 +58,7 @@ namespace DependencyInjectionWorkshop.Models
                 AddFailCount(accountId, httpClient);
 
                 //紀錄失敗次數
-                LogAccountFailCount(accountId, httpClient);
+                LogFailCount(accountId, httpClient);
 
                 //推播
                 PushMessage();
@@ -56,7 +73,7 @@ namespace DependencyInjectionWorkshop.Models
             slackClient.PostMessage(responseMessage => { }, "my channel", "my message", "my bot name");
         }
 
-        private static void LogAccountFailCount(string accountId, HttpClient httpClient)
+        private static void LogFailCount(string accountId, HttpClient httpClient)
         {
             var failedCount = GetFailedCount(accountId, httpClient);
             var logger = NLog.LogManager.GetCurrentClassLogger();
@@ -109,18 +126,6 @@ namespace DependencyInjectionWorkshop.Models
             }
 
             return currentOtp;
-        }
-
-        private static string GetCurrentPasswordFromDb(string accountId)
-        {
-            string currentPassword;
-            using (var connection = new SqlConnection("datasource=db,password=abc"))
-            {
-                currentPassword = connection.Query<string>("spGetUserPassword", new {Id = accountId},
-                    commandType: CommandType.StoredProcedure).SingleOrDefault();
-            }
-
-            return currentPassword;
         }
 
         private static string GetHashPassword(string password)
