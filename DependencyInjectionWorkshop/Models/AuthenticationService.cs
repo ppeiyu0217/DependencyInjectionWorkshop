@@ -9,9 +9,9 @@ using System.Text;
 
 namespace DependencyInjectionWorkshop.Models
 {
-    public class ProFileDao
+    public class ProfileDao
     {
-        public string GetCurrentPasswordFromDb(string accountId)
+        public string GetPassword(string accountId)
         {
             string currentPassword;
             using (var connection = new SqlConnection("datasource=db,password=abc"))
@@ -24,66 +24,83 @@ namespace DependencyInjectionWorkshop.Models
         }
     }
 
+    public class Sha256Adapter
+    {
+        public string Hash(string plainText)
+        {
+            var crypt = new System.Security.Cryptography.SHA256Managed();
+            var hash = new StringBuilder();
+            var crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(plainText));
+            foreach (var theByte in crypto)
+            {
+                hash.Append(theByte.ToString("x2"));
+            }
+
+            var hashPassword = hash.ToString();
+            return hashPassword;
+        }
+    }
+
     public class AuthenticationService
     {
-        private readonly ProFileDao _proFileDao = new ProFileDao();
+        private readonly ProfileDao _profileDao = new ProfileDao();
+        private readonly Sha256Adapter _sha256Adapter = new Sha256Adapter();
 
         public bool Verify(string accountId, string password, string otp)
         {
             //檢查帳號是否被封鎖
-            var httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.com/") };
-            var isLocked = IsAccountLocked(accountId, httpClient);
+            var isLocked = IsAccountLocked(accountId);
             if (isLocked)
             {
                 throw new FailedTooManyTimesException();
             }
 
             //取得密碼
-            var currentPassword = _proFileDao.GetCurrentPasswordFromDb(accountId);
+            var currentPassword = _profileDao.GetPassword(accountId);
 
-            var hashPassword = GetHashPassword(password);
+            var hashPassword = _sha256Adapter.Hash(password);
 
             //取得Otp
-            var currentOtp = GetCurrentOtp(accountId, httpClient);
+            var currentOtp = GetCurrentOtp(accountId);
 
             // 驗證密碼、Otp
             if (hashPassword == currentPassword && otp == currentOtp)
             {
-                ResetFailCount(accountId, httpClient);
+                ResetFailCount(accountId);
                 return true;
             }
             else
             {
                 //累計失敗次數
-                AddFailCount(accountId, httpClient);
+                AddFailCount(accountId);
 
                 //紀錄失敗次數
-                LogFailCount(accountId, httpClient);
+                LogFailCount(accountId);
 
                 //推播
-                PushMessage();
+                PushMessage(accountId);
 
                 return false;
             }
         }
 
-        private static void PushMessage()
+        private static void PushMessage(string accountId)
         {
             var slackClient = new SlackClient("my api token");
-            slackClient.PostMessage(responseMessage => { }, "my channel", "my message", "my bot name");
+            slackClient.PostMessage(responseMessage => { }, "my channel", $"my message : {accountId}", "my bot name");
         }
 
-        private static void LogFailCount(string accountId, HttpClient httpClient)
+        private static void LogFailCount(string accountId)
         {
-            var failedCount = GetFailedCount(accountId, httpClient);
+            var failedCount = GetFailedCount(accountId);
             var logger = NLog.LogManager.GetCurrentClassLogger();
             logger.Info($"accountId:{accountId} failed times:{failedCount}");
         }
 
-        private static int GetFailedCount(string accountId, HttpClient httpClient)
+        private static int GetFailedCount(string accountId)
         {
             var failedCountResponse =
-                httpClient.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
+                new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
 
             failedCountResponse.EnsureSuccessStatusCode();
 
@@ -91,30 +108,30 @@ namespace DependencyInjectionWorkshop.Models
             return failedCount;
         }
 
-        private static void AddFailCount(string accountId, HttpClient httpClient)
+        private static void AddFailCount(string accountId)
         {
-            var resetResponse = httpClient.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
+            var resetResponse = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
             resetResponse.EnsureSuccessStatusCode();
         }
 
-        private static bool IsAccountLocked(string accountId, HttpClient httpClient)
+        private static bool IsAccountLocked(string accountId)
         {
-            var isLockedResponse = httpClient.PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
+            var isLockedResponse = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
 
             isLockedResponse.EnsureSuccessStatusCode();
             var isLocked = isLockedResponse.Content.ReadAsAsync<bool>().Result;
             return isLocked;
         }
 
-        private static void ResetFailCount(string accountId, HttpClient httpClient)
+        private static void ResetFailCount(string accountId)
         {
-            var addFailedCountResponse = httpClient.PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
+            var addFailedCountResponse = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
             addFailedCountResponse.EnsureSuccessStatusCode();
         }
 
-        private static string GetCurrentOtp(string accountId, HttpClient httpClient)
+        private static string GetCurrentOtp(string accountId)
         {
-            var response = httpClient.PostAsJsonAsync("api/otps", accountId).Result;
+            var response = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/otps", accountId).Result;
             string currentOtp;
             if (response.IsSuccessStatusCode)
             {
@@ -126,20 +143,6 @@ namespace DependencyInjectionWorkshop.Models
             }
 
             return currentOtp;
-        }
-
-        private static string GetHashPassword(string password)
-        {
-            var crypt = new System.Security.Cryptography.SHA256Managed();
-            var hash = new StringBuilder();
-            var crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(password));
-            foreach (var theByte in crypto)
-            {
-                hash.Append(theByte.ToString("x2"));
-            }
-
-            var hashPassword = hash.ToString();
-            return hashPassword;
         }
     }
 
