@@ -2,7 +2,12 @@
 
 namespace DependencyInjectionWorkshop.Models
 {
-    public class AuthenticationService 
+    public interface IAuthenticationService
+    {
+        bool Verify(string accountId, string password, string otp);
+    }
+
+    public class AuthenticationService : IAuthenticationService
     {
         private readonly IProfile _profile;
         private readonly IFailedCounter _failedCounter;

@@ -1,6 +1,6 @@
 ﻿namespace DependencyInjectionWorkshop.Models
 {
-    public class NotificationDecorator
+    public class NotificationDecorator : IAuthenticationService
     {
         private readonly INotification _notification;
 
@@ -13,6 +13,10 @@
         {
             _notification.PushMessage(accountId);
         }
-        
+
+        public bool Verify(string accountId, string password, string otp)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
