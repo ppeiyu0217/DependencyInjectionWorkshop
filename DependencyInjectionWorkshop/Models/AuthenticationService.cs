@@ -4,30 +4,34 @@ namespace DependencyInjectionWorkshop.Models
 {
     public class AuthenticationService
     {
-        private readonly ProfileDao _profileDao;
-        private readonly FailedCounter _failedCounter;
-        private readonly Sha256Adapter _sha256Adapter;
-        private readonly OtpService _otpService;
-        private readonly NLogAdapter _nLogAdapter;
-        private readonly SlackAdapter _slackAdapter;
+        private readonly IProfile _profile;
+        private readonly IFailedCounter _failedCounter;
+        private readonly IHash _hash;
+        private readonly IOtpService _otpService;
+        private readonly ILogger _logger;
+        private readonly INotification _notification;
 
-        public AuthenticationService(ProfileDao profileDao, FailedCounter failedCounter, Sha256Adapter sha256Adapter, OtpService otpService, NLogAdapter nLogAdapter, SlackAdapter slackAdapter)
+        public AuthenticationService(ILogger logger, IProfile profile, INotification notification,
+            IHash hash,
+            IFailedCounter failedCounter,
+            IOtpService otpService)
         {
-            _profileDao = profileDao;
+            _profile = profile;
             _failedCounter = failedCounter;
-            _sha256Adapter = sha256Adapter;
+            _hash = hash;
             _otpService = otpService;
-            _nLogAdapter = nLogAdapter;
-            _slackAdapter = slackAdapter;
+            _logger = logger;
+            _notification = notification;
         }
+
         public AuthenticationService()
         {
-            _profileDao = new ProfileDao();
+            _profile = new ProfileDao();
             _failedCounter = new FailedCounter();
-            _sha256Adapter = new Sha256Adapter();
+            _hash = new Sha256Adapter();
             _otpService = new OtpService();
-            _nLogAdapter = new NLogAdapter();
-            _slackAdapter = new SlackAdapter();
+            _logger = new NLogAdapter();
+            _notification = new SlackAdapter();
         }
 
         public bool Verify(string accountId, string password, string otp)
@@ -40,9 +44,9 @@ namespace DependencyInjectionWorkshop.Models
             }
 
             //取得密碼
-            var currentPassword = _profileDao.GetPassword(accountId);
+            var currentPassword = _profile.GetPassword(accountId);
 
-            var hashPassword = _sha256Adapter.Hash(password);
+            var hashPassword = _hash.Hash(password);
 
             //取得Otp
             var currentOtp = _otpService.GetCurrentOtp(accountId);
@@ -60,10 +64,10 @@ namespace DependencyInjectionWorkshop.Models
 
                 //紀錄失敗次數
                 var failedCount = _failedCounter.GetFailedCount(accountId);
-                _nLogAdapter.Info($"accountId:{accountId} failed times:{failedCount}");
+                _logger.Info($"accountId:{accountId} failed times:{failedCount}");
 
                 //推播
-                _slackAdapter.PushMessage(accountId);
+                _notification.PushMessage(accountId);
 
                 return false;
             }
