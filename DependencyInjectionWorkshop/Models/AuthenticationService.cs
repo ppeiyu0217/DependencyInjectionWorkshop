@@ -14,9 +14,8 @@ namespace DependencyInjectionWorkshop.Models
         private readonly IHash _hash;
         private readonly IOtpService _otpService;
         private readonly ILogger _logger;
-        private readonly INotification _notication;
 
-        public AuthenticationService(ILogger logger, IProfile profile, INotification notication,
+        public AuthenticationService(ILogger logger, IProfile profile,
             IHash hash,
             IFailedCounter failedCounter,
             IOtpService otpService)
@@ -26,7 +25,6 @@ namespace DependencyInjectionWorkshop.Models
             _hash = hash;
             _otpService = otpService;
             _logger = logger;
-            _notication = notication;
         }
 
         public AuthenticationService()
@@ -36,7 +34,6 @@ namespace DependencyInjectionWorkshop.Models
             _hash = new Sha256Adapter();
             _otpService = new OtpService();
             _logger = new NLogAdapter();
-            _notication = new SlackAdapter();
         }
 
         public bool Verify(string accountId, string password, string otp)
@@ -70,9 +67,6 @@ namespace DependencyInjectionWorkshop.Models
                 //紀錄失敗次數
                 var failedCount = _failedCounter.GetFailedCount(accountId);
                 _logger.Info($"accountId:{accountId} failed times:{failedCount}");
-
-                //推播
-                //NotificationDecorator.NotificationWhenInvalid(accountId, _notication);
 
                 return false;
             }

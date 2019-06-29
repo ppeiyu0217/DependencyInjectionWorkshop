@@ -35,7 +35,6 @@ namespace DependencyInjectionWorkshopTests
             _authenticationService = new AuthenticationService(
                 _logger,
                 _profile,
-                _notification,
                 _hash,
                 _failedCounter,
                 _otpService);
