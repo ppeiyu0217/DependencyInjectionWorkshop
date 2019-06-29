@@ -2,10 +2,12 @@
 {
     public class NotificationDecorator : IAuthenticationService
     {
+        private readonly IAuthenticationService _authenticationService;
         private readonly INotification _notification;
 
-        public NotificationDecorator(INotification notification)
+        public NotificationDecorator(IAuthenticationService authenticationService,INotification notification)
         {
+            _authenticationService = authenticationService;
             _notification = notification;
         }
 
