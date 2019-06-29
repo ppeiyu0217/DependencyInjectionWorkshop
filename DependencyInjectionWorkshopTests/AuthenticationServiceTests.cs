@@ -50,6 +50,22 @@ namespace DependencyInjectionWorkshopTests
             ShouldBeValid(isValid);
         }
 
+        [Test]
+        public void is_invalid_when_otp_is_wrong()
+        {
+            GivenPasswordFromDb(DefaultAccount, DefaultHashPassword);
+            GivenHashPassword(DefaultInputPassword, DefaultHashPassword);
+            GivenOtp(DefaultAccount, DefaultOtp);
+
+            var isValid = WhenVerify(DefaultAccount, DefaultInputPassword, "wrong otp");
+
+            ShouldBeInValid(isValid);
+        }
+
+        private static void ShouldBeInValid(bool isValid)
+        {
+            Assert.IsFalse(isValid);
+        }
 
         private static void ShouldBeValid(bool isValid)
         {
