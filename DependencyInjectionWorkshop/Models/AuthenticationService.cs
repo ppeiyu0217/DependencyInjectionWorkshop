@@ -42,15 +42,20 @@ namespace DependencyInjectionWorkshop.Models
                 throw new Exception($"web api error, accountId:{accountId}");
             }
 
-
             if (hashPassword == currentPassword && otp == currentOtp)
             {
+                var addFailedCountResponse = httpClient.PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
+                addFailedCountResponse.EnsureSuccessStatusCode();
                 return true;
             }
             else
             {
                 var slackClient = new SlackClient("my api token");
                 slackClient.PostMessage(responseMessage => { }, "my channel", "my message", "my bot name");
+
+                var resetResponse = httpClient.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
+                resetResponse.EnsureSuccessStatusCode();
+
                 return false;
             }
         }
