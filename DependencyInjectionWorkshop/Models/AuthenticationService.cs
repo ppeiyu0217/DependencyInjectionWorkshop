@@ -58,11 +58,23 @@ namespace DependencyInjectionWorkshop.Models
             }
             else
             {
-                var slackClient = new SlackClient("my api token");
-                slackClient.PostMessage(responseMessage => { }, "my channel", "my message", "my bot name");
-
+                //累計失敗次數
                 var resetResponse = httpClient.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
                 resetResponse.EnsureSuccessStatusCode();
+
+                //紀錄失敗次數
+                var failedCountResponse =
+                    httpClient.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
+
+                failedCountResponse.EnsureSuccessStatusCode();
+
+                var failedCount = failedCountResponse.Content.ReadAsAsync<int>().Result;
+                var logger = NLog.LogManager.GetCurrentClassLogger();
+                logger.Info($"accountId:{accountId} failed times:{failedCount}");
+
+                //推播
+                var slackClient = new SlackClient("my api token");
+                slackClient.PostMessage(responseMessage => { }, "my channel", "my message", "my bot name");
 
                 return false;
             }
