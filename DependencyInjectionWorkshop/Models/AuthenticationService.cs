@@ -35,11 +35,11 @@ namespace DependencyInjectionWorkshop.Models
             _otpService = new OtpService();
             _logger = new NLogAdapter();
         }
-
+           
         public bool Verify(string accountId, string password, string otp)
         {
             //取得密碼
-            var currentPassword = _profile.GetPassword(accountId);
+            var currentPassword =  _profile.GetPassword(accountId);
 
             var hashPassword = _hash.Compute(password);
 
