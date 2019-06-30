@@ -14,12 +14,14 @@ namespace DependencyInjectionWorkshop.Models
         private readonly IHash _hash;
         private readonly IOtpService _otpService;
         private readonly ILogger _logger;
+        private readonly LogFailedCountDecorator _logFailedCountDecorator;
 
         public AuthenticationService(ILogger logger, IProfile profile,
             IHash hash,
             IFailedCounter failedCounter,
             IOtpService otpService)
         {
+            _logFailedCountDecorator = new LogFailedCountDecorator(this);
             _profile = profile;
             _failedCounter = failedCounter;
             _hash = hash;
@@ -29,6 +31,7 @@ namespace DependencyInjectionWorkshop.Models
 
         public AuthenticationService()
         {
+            _logFailedCountDecorator = new LogFailedCountDecorator(this);
             _profile = new Profile();
             _failedCounter = new FailedCounter();
             _hash = new Sha256Adapter();
@@ -49,17 +52,11 @@ namespace DependencyInjectionWorkshop.Models
             // 驗證密碼、Otp
             if (hashPassword == currentPassword && otp == currentOtp)
             {
-                //_failedCounter.ResetFailedCount(accountId);
                 return true;
             }
             else
             {
-                //累計失敗次數
-                //_failedCounter.AddFailedCount(accountId);
-
-                //紀錄失敗次數
-                var failedCount = _failedCounter.GetFailedCount(accountId);
-                _logger.Info($"accountId:{accountId} failed times:{failedCount}");
+                _logFailedCountDecorator.LogFailedCount(accountId);
 
                 return false;
             }
