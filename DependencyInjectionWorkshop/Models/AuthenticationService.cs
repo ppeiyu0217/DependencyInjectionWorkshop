@@ -56,7 +56,7 @@ namespace DependencyInjectionWorkshop.Models
             }
             else
             {
-                _logFailedCountDecorator.LogFailedCount(accountId);
+                //_logFailedCountDecorator.LogFailedCount(accountId);
 
                 return false;
             }

@@ -1,4 +1,6 @@
-﻿namespace DependencyInjectionWorkshop.Models
+﻿using System.Runtime.Serialization;
+
+namespace DependencyInjectionWorkshop.Models
 {
     public class LogFailedCountDecorator : BaseAuthenticationDecorator
     {
@@ -17,6 +19,17 @@
             //紀錄失敗次數
             var failedCount = _failedCounter.GetFailedCount(accountId);
             _logger.Info($"accountId:{accountId} failed times:{failedCount}");
+        }
+
+        public override bool Verify(string accountId, string password, string otp)
+        {
+            var isValid = base.Verify(accountId, password, otp);
+            if (!isValid)
+            {
+                LogFailedCount(accountId);
+            }
+
+            return isValid;
         }
     }
 }
