@@ -84,7 +84,7 @@ namespace DependencyInjectionWorkshopTests
         [Test]
         public void should_Reset_FailedCount_when_valid()
         {
-            WhenVerified();
+            WhenValid();
             ShouldResetFailedCount(DefaultAccount);
         }
 
@@ -105,7 +105,7 @@ namespace DependencyInjectionWorkshopTests
 
         private void ShouldThrow<TException>() where TException : Exception
         {
-            TestDelegate action = WhenVerified;
+            TestDelegate action = () => WhenValid();
             Assert.Throws<TException>(action);
         }
 
@@ -129,7 +129,7 @@ namespace DependencyInjectionWorkshopTests
             _failedCounter.Received(1).ResetFailedCount(account);
         }
 
-        private void WhenVerified()
+        private bool  WhenValid()
         {
             GivenPasswordFromDb(DefaultAccount, DefaultHashPassword);
             GivenHashPassword(DefaultInputPassword, DefaultHashPassword);
@@ -137,7 +137,7 @@ namespace DependencyInjectionWorkshopTests
 
             var isValid = WhenVerify(DefaultAccount, DefaultInputPassword, DefaultOtp);
 
-            ShouldBeValid(isValid);
+            return isValid;
         }
 
 
