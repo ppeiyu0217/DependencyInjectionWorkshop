@@ -49,13 +49,13 @@ namespace DependencyInjectionWorkshop.Models
             // 驗證密碼、Otp
             if (hashPassword == currentPassword && otp == currentOtp)
             {
-                _failedCounter.ResetFailedCount(accountId);
+                //_failedCounter.ResetFailedCount(accountId);
                 return true;
             }
             else
             {
                 //累計失敗次數
-                _failedCounter.AddFailedCount(accountId);
+                //_failedCounter.AddFailedCount(accountId);
 
                 //紀錄失敗次數
                 var failedCount = _failedCounter.GetFailedCount(accountId);

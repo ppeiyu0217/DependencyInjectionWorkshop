@@ -126,7 +126,7 @@ namespace DependencyInjectionWorkshopTests
 
         private void ShouldResetFailedCount(string account)
         {
-            _failedCounter.Received().ResetFailedCount(account);
+            _failedCounter.Received(1).ResetFailedCount(account);
         }
 
         private void WhenVerified()
@@ -153,7 +153,7 @@ namespace DependencyInjectionWorkshopTests
         }
 
 
-        private void WhenInvalid()
+        private bool WhenInvalid()
         {
             GivenPasswordFromDb(DefaultAccount, DefaultHashPassword);
             GivenHashPassword(DefaultInputPassword, DefaultHashPassword);
@@ -161,7 +161,7 @@ namespace DependencyInjectionWorkshopTests
 
             var isValid = WhenVerify(DefaultAccount, DefaultInputPassword, "wrong otp");
 
-            ShouldBeInvalid(isValid);
+            return isValid;
         }
 
         private static void ShouldBeInvalid(bool isValid)
