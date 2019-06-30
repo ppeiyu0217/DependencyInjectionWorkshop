@@ -37,7 +37,8 @@ namespace DependencyInjectionWorkshopTests
                 _otpService);
 
             var notificationDecorator = new NotificationDecorator(authenticationService, _notification);
-            _authentication = new FailedCounterDecorator(notificationDecorator, _failedCounter);
+            var failedCounterDecorator = new FailedCounterDecorator(notificationDecorator, _failedCounter);
+            _authentication = new LogFailedCountDecorator(failedCounterDecorator, _failedCounter, _logger);
         }
 
         [Test]
@@ -126,7 +127,7 @@ namespace DependencyInjectionWorkshopTests
             _failedCounter.Received(1).ResetFailedCount(account);
         }
 
-        private bool  WhenValid()
+        private bool WhenValid()
         {
             GivenPasswordFromDb(DefaultAccount, DefaultHashPassword);
             GivenHashPassword(DefaultInputPassword, DefaultHashPassword);
