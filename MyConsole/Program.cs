@@ -100,6 +100,10 @@ namespace MyConsole
             containerBuilder.RegisterType<ConsoleAdapter>()
                 .As<ILogger>();
 
+            containerBuilder.RegisterDecorator<NotificationDecorator, IAuthentication>();
+            containerBuilder.RegisterDecorator<FailedCounterDecorator, IAuthentication>();
+            containerBuilder.RegisterDecorator<LogFailedCountDecorator, IAuthentication>();
+
             containerBuilder.RegisterType<AuthenticationService>()
                 .As<IAuthentication>();
 
