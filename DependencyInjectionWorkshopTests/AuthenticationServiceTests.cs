@@ -32,11 +32,8 @@ namespace DependencyInjectionWorkshopTests
             _notification = Substitute.For<INotification>();
             _otpService = Substitute.For<IOtpService>();
 
-            var authenticationService = new AuthenticationService(
-                _logger,
-                _profile,
+            var authenticationService = new AuthenticationService(_profile,
                 _hash,
-                _failedCounter,
                 _otpService);
 
             var notificationDecorator = new NotificationDecorator(authenticationService, _notification);
