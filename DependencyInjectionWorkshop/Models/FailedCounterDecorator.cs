@@ -2,34 +2,29 @@
 {
     public abstract class BaseAuthenticationDecorator : IAuthentication
     {
-        protected IAuthentication _authentication;
+        private readonly IAuthentication _authentication;
 
         protected BaseAuthenticationDecorator(IAuthentication authentication)
         {
             _authentication = authentication;
         }
 
-        public bool Verify(string accountId, string password, string otp)
+        public virtual bool Verify(string accountId, string password, string otp)
         {
             return _authentication.Verify(accountId, password, otp);
         }
-
-
     }
 
     public class FailedCounterDecorator : BaseAuthenticationDecorator
     {
         private readonly IFailedCounter _failedCounter;
 
-        public FailedCounterDecorator(IAuthentication authentication, IFailedCounter failedCounter)
+        public FailedCounterDecorator(IAuthentication authentication
+            , IFailedCounter failedCounter) : base(authentication)
         {
-            _authentication = authentication;
             _failedCounter = failedCounter;
         }
-
-        public FailedCounterDecorator(IAuthentication authentication) : base(authentication)
-        {
-        }
+        
 
         private void CheckAccountIsLocked(string accountId)
         {
@@ -43,7 +38,7 @@
         public override bool Verify(string accountId, string password, string otp)
         {
             CheckAccountIsLocked(accountId);
-            return _authentication.Verify(accountId, password, otp);
+            return base.Verify(accountId, password, otp);
         }
     }
 }
