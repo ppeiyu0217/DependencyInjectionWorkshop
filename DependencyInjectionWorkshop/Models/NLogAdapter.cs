@@ -12,5 +12,6 @@
             var logger = NLog.LogManager.GetCurrentClassLogger();
             logger.Info(message);
         }
+
     }
 }

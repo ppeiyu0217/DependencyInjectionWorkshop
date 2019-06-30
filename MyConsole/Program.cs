@@ -99,15 +99,27 @@ namespace MyConsole
                 .As<IFailedCounter>();
             containerBuilder.RegisterType<ConsoleAdapter>()
                 .As<ILogger>();
+            containerBuilder.RegisterType<LogAdapter>()
+                .As<ILogger>();
+
 
             containerBuilder.RegisterDecorator<NotificationDecorator, IAuthentication>();
             containerBuilder.RegisterDecorator<FailedCounterDecorator, IAuthentication>();
             containerBuilder.RegisterDecorator<LogFailedCountDecorator, IAuthentication>();
+            containerBuilder.RegisterDecorator<LogMethodInfoDecorator, IAuthentication>();
 
             containerBuilder.RegisterType<AuthenticationService>()
                 .As<IAuthentication>();
 
             _container = containerBuilder.Build();
+        }
+    }
+
+    internal class LogAdapter : ILogger
+    {
+        public void Info(string message)
+        {
+            Console.WriteLine(message);
         }
     }
 
