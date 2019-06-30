@@ -41,7 +41,7 @@ namespace MyConsole
             var failedCounterDecorator = new FailedCounterDecorator(notificationDecorator, failedCounter);
             var logDecorator = new LogFailedCountDecorator(failedCounterDecorator, failedCounter, logger);
 
-            var finalAuthentication = logDecorator;
+            var finalAuthentication = logDecorator; 
 
             var isValid = finalAuthentication.Verify("joey", "pw", "1234563");
 
